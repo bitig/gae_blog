@@ -1,0 +1,9 @@
+
+<div class="comments__comment-info">
+	<span class="comments__comment-user">{{ comment.username }}</span>
+	<span style="font-size:small" class="comments__coment-date">{{ comment.create_date.strftime('%B %d %Y') }}</span>
+</div>
+
+<div class="comments__comment-text">
+	{{ comment.comment }}
+</div>

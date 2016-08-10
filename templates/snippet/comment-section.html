@@ -1,0 +1,22 @@
+<div class="comments__wrapper" data-id="{{ post.get_id() }}">
+
+	<div class="comments__form">
+		<div class="form-group">
+			<label for="comment_box">Comment</label>
+			<textarea type="text" class="form-control comments__textarea" placeholder="Enter your comment here" name="message"></textarea>
+		</div>
+		<button class="btn btn-default comments__submit-button" data-id="{{ post.get_id() }}">Submit</button>
+		<span class="comments__submit-status"> </span>
+	</div>
+
+	<div class="comments__list" data-id="{{ post.get_id() }}">
+		{% if comments %}
+			{% for comment in comments %}
+
+					{% include 'snippet/comment.html' %}
+
+			{% endfor %}
+		{% endif %}
+	</div>
+
+</div>

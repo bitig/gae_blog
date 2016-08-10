@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Blog</title>
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+		<link rel="stylesheet" href="/public/css/style.css">
+		<link href="https://fonts.googleapis.com/css?family=Nixie+One|Roboto:300" rel="stylesheet">
+
+	</head>
+
+	<body>
+
+		{% include "snippet/user-info.html" %}
+
+		<header><h1>Awesome Blog</h1></header>
+
+		{% block content %}
+
+		{% endblock %}
+
+
+
+		<script src="/public/js/lib/zepto.js"></script>
+		<script src="/public/js/lib/knockout-3.4.0.js"></script>
+		<script src="/public/js/main.js"></script>
+	</body>
+
+</html>

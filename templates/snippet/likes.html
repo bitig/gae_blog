@@ -1,0 +1,16 @@
+
+<div class="likes__count">
+	<span class="likes__count-number">{{ post.like_count }}</span>
+	<span class="likes__count-label">{% if post.like_count == 1 %}Like{% else %}Likes{% endif %}</div>
+
+<div class="likes__submit">
+
+	{% if user and post.likes.count(user.get_user_id_str()) == 0 %}
+		<button class="btn btn-default likes__button" data-id="{{ post.get_id() }}" data-bind="click: function(event) { like(event) }">Like</button>
+	{% else %}
+		<button class="btn btn-default likes__button disabled" data-id="{{ post.get_id() }}" data-bind="click: function(event) { like(event) }">Like</button>
+	{% endif %}
+
+	<span class="likes__button-message" data-id="{{ post.get_id() }}">{{ message | safe}}</span>
+
+</div>

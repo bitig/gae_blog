@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+	<div class="posts">
+		{% if posts %}
+			{% for post in posts %}
+
+				<h1 class="posts_post-title">{{ post.title }} <span class="small">{{post.create_date.strftime('%B %d %Y')}}</span></h1>
+				<p><code>{{ post.get_id() }}</code></p>
+
+				<p class="posts_post-text">{{ post.render_snippet() | safe }}</p>
+				<p><a href="/blog/{{ post.get_id() }}/">Read More...</a></p>
+
+				{% if user %}
+					<p><a href="/blog/edit/{{ post.get_id() }}/">Edit Post</a></p>
+				{% endif %}
+
+
+				<div class="likes" data-id="{{ post.key().id() }}">
+					{% include "snippet/likes.html" %}
+				</div>
+
+			{% endfor %}
+
+
+		{% else %}
+			<div style="text-align:center;color:red">{{error}}</div>
+		{% endif %}
+
+	</div>
+
+
+
+{% endblock %}
