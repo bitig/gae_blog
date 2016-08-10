@@ -21,13 +21,21 @@ import hmac
 import random
 from lib.py_bcrypt import bcrypt
 from google.appengine.ext import db
+
+# root dir of blog
 HOME_PATH = '/blog'
 
+# initialize jinga2
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
-jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir), autoescape = True)
+jinja_env = jinja2.Environment(
+                            loader = jinja2.FileSystemLoader(template_dir),
+                            autoescape = True
+                            )
 
+# secret for secure cookie has - should not be here in a production server
 secret = 'rastfydguhiujimiqwo'
 
+# secure cookies
 def make_secure_val(val):
     return '%s|%s' % (val, hmac.new(secret, val).hexdigest())
 
@@ -36,22 +44,21 @@ def check_secure_val(secure_val):
     if secure_val == make_secure_val(val):
         return val
 
+# parent handler extends webapp2.RequestHandler with convenience methods
 class Handler(webapp2.RequestHandler):
+    # shorthand write
     def write(self, *a, **kw):
         self.response.out.write(*a, **kw)
 
+    # generate HTML from template
     def render_str(self, template, **params):
         t = jinja_env.get_template(template)
         return t.render(params)
 
     def render(self, template, **kw):
-        user_id = self.logged_in()
-        if user_id:
-            user = User.get_by_id(int(user_id))
-        else:
-            user = None
-        self.write(self.render_str(template, user = user, **kw))
+        self.write(self.render_str(template, user = self.user, **kw))
 
+    # generic methods to set/read any cookies
     def set_secure_cookie(self, name, val):
         sec_val = make_secure_val(val)
         self.response.set_cookie(name, sec_val)
@@ -60,12 +67,15 @@ class Handler(webapp2.RequestHandler):
         cookie_val = self.request.cookies.get(name)
         return cookie_val and check_secure_val(cookie_val)
 
+    # method to set secure login cookie
     def set_login_cookie(self, user):
-        self.set_secure_cookie('user_id', str(user.get_user_id()))
+        self.set_secure_cookie('user_id', str(user.get_id()))
 
+    # logs user out
     def remove_login_cookie(self):
         self.response.headers.add_header('Set-Cookie', 'user_id=; Path=/')
 
+    # redirects to login
     def redirect_to_login(self):
         self.redirect(HOME_PATH + '/login/')
 
@@ -79,8 +89,10 @@ class Handler(webapp2.RequestHandler):
 
     def initialize(self, *a, **kw):
         webapp2.RequestHandler.initialize(self, *a, **kw)
-        uid = self.read_secure_cookie('user_id')
-        self.user = uid and User.by_id(int(uid)) # get user on every request
+        # set user on every request
+        uid = self.logged_in()
+        self.user = uid and User.by_id(int(uid))
+
 
 class User(db.Model):
     username = db.StringProperty(required = True)
@@ -93,11 +105,8 @@ class User(db.Model):
         if bcrypt.hashpw(password, self.password) == self.password:
             return True
 
-    def get_user_id(self):
+    def get_id(self):
         return self.key().id()
-
-    def get_user_id_str(self):
-        return str(self.key().id())
 
     @classmethod
     def by_id(cls, uid):
@@ -184,22 +193,31 @@ class MainPage(Handler):
         self.render_front()
 
 class SubmitHandler(Handler):
+
+    def get_post(self, id_str):
+        post_id = None
+        if id_str and id_str.isdigit():
+            post_id = int(id_str)
+        post = None
+        if post_id:
+            post = Post.get_by_id(post_id)
+        return post
+
     def render_form(self, title = '', content = '', title_error = '', content_error = ''):
         self.render("form.html", title = title, content = content, title_error = title_error, content_error = content_error)
 
-    def post(self):
-        user_id = self.logged_in()
-        if user_id:
-            user = User.get_by_id(int(user_id))
+    def post(self, post_id = None):
+        if self.user:
 
-            post_id = self.request.get('post_id')
             title = self.request.get('subject')
             content = self.request.get('content')
 
             if title and content:
+                # if editing, there will be a post_id defined
                 if post_id:
-                    post = Post.by_id(int(post_id))
-                    if user_id == post.owner_id:
+                    post = self.get_post(post_id)
+                    print self.user.get_id() == int(post.owner_id)
+                    if post and self.user.get_id() == int(post.owner_id):
                         post.title = title
                         post.content = content
                         post.put()
@@ -207,7 +225,8 @@ class SubmitHandler(Handler):
                     else:
                         self.redirect_to_login()
                 else:
-                    post = Post(title = title, content = content, owner_id = user_id, owner = user)
+                    # create a new post
+                    post = Post(title = title, content = content, owner_id = self.user.get_id(), owner = self.user)
                     post.put()
                     self.redirect(HOME_PATH + '/' + str(post.key().id()) + '/')
             else:
@@ -224,57 +243,21 @@ class SubmitHandler(Handler):
 class NewPost(SubmitHandler):
 
     def get(self):
-        user_id = self.logged_in()
-        if user_id:
+        if self.user:
             self.render_form()
         else:
             self.redirect_to_login()
 
 class EditPost(SubmitHandler):
 
-    def get_user(self, user_id):
-        user_id = self.logged_in()
-        user = None
-        if user_id and user_id.isdigit():
-            user = User.get_by_id(int(user_id))
-        return user
-
-    def get_post(self, id_str):
-        post_id = None
-        if id_str and id_str.isdigit():
-            post_id = int(id_str)
-        post = None
-        if post_id:
-            post = Post.get_by_id(post_id)
-        return post
-
-
     def get(self, id_str):
-        user_id = self.logged_in()
-        user = self.get_user(user_id)
 
         post = self.get_post(id_str)
-
-        # you can edit if you are logged in, give a valid post,
-        # and are the owner of the post
-        if post and user and int(post.owner_id) == int(user.get_user_id()):
+        # you can edit if you are logged in, give a valid post, and are owner
+        if post and self.user and int(post.owner_id) == self.user.get_id():
             self.render("form.html", title = post.title, content = post.content)
         else:
             self.redirect(HOME_PATH + '/login/')
-
-    def post(self, id_str):
-        user_id = self.logged_in()
-        user = self.get_user(user_id)
-
-        post = self.get_post(id_str)
-
-        if post and user and int(post.owner_id) == int(user.get_user_id()):
-            self.render("form.html", title = post.title, content = post.content)
-        else:
-            self.redirect(HOME_PATH + '/login/')
-
-
-
 
 
 class BlogPage(Handler):
@@ -365,10 +348,6 @@ class LoginPage(Handler):
 
 class Logout(Handler):
 
-    # def get(self):
-        # self.logout()
-        # self.redirect(HOME_PATH)
-
     def post(self):
         self.remove_login_cookie()
         self.redirect(HOME_PATH + '/signup/')
@@ -378,8 +357,6 @@ class LikeHandler(Handler):
 
     def post(self, digits):
         post_id = digits
-        user_id = self.logged_in()
-
         post = None
         if digits.isdigit():
             post = Post.get_by_id(int(post_id))
@@ -387,16 +364,15 @@ class LikeHandler(Handler):
         message = ''
 
         # if user_id is not None, the user is logged in
-        if user_id and user_id.isdigit():
-            user_id = int(user_id)
-            print user_id
+        if self.user:
             if post:
-                if post.already_liked(user_id):
+                uid = str(self.user.get_id())
+                if post.already_liked(uid):
                     message = 'You already liked this.'
-                if post.is_creator(user_id):
+                if post.is_creator(uid):
                     message = 'You can\'t like your own post.'
-                if not post.already_liked(user_id) and not post.is_creator(user_id):
-                    post.like(user_id)
+                if not post.already_liked(uid) and not post.is_creator(uid):
+                    post.like(uid)
                     post.put()
             else:
                 self.response.set_status(422)
@@ -411,13 +387,11 @@ class CommentHandler(Handler):
     def post(self, digits):
         post_id = digits
         message = self.request.body
-        user_id = self.logged_in()
 
-        if user_id and user_id.isdigit() and post_id.isdigit():
+        if self.user and post_id.isdigit():
             post = Post.get_by_id(int(post_id))
-            user = User.get_by_id(int(user_id))
-            if post and user and message:
-                comment = Comment(username = user.username, user = user, post = post, comment = message)
+            if post and self.user and message:
+                comment = Comment(username = self.user.username, user = self.user, post = post, comment = message)
                 comment.put()
                 self.render("snippet/comment.html", comment = comment, post = post)
             else:
