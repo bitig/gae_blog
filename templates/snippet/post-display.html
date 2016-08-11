@@ -1,0 +1,28 @@
+<div class="posts_post">
+	<h1 class="posts_post-title">
+		{{ post.title }}
+	</h1>
+	<div class="posts_post-date">
+		{{post.create_date.strftime('%B %d %Y')}}
+	</div>
+
+	{% if summarize_post %}
+		<div class="posts_post-text">{{ post.render_snippet() | safe }}</div>
+	{% else %}
+		<div class="posts_post-text">{{ post.render() | safe }}</div>
+	{% endif %}
+
+	<p class="text-center posts_read-more">
+		{% if summarize_post %}
+			<a class="btn btn-lg btn-info" href="/blog/{{ post.get_id() }}/">Read More...</a>
+		{% endif %}
+		{% if user and user.get_id() | string == post.owner_id %}
+			<a class="btn  btn-warning" href="/blog/edit/{{ post.get_id() }}/">Edit Post</a>
+			<a class="btn  btn-danger" href="/blog/delete/{{ post.get_id() }}/">Delete Post</a>
+		{% endif %}
+	</p>
+	<div class="text-right likes" data-id="{{ post.key().id() }}">
+		{% include "snippet/likes.html" %}
+	</div>
+
+</div>

@@ -3,17 +3,11 @@
 {% block content %}
 <div class="posts__single-post">
 
+	
+
 	{% if post %}
 
-		<h1 class="posts_post-title">{{ post.title }} <span class="small">{{post.create_date.strftime('%B %d %Y')}}</span></h1>
-		<p><code>{{ post.key().id() }}</code></p>
-
-		<p class="posts_post-text">{{ post.render() | safe }}</p>
-
-		<div class="likes" data-id="{{ post.key().id() }}">
-			{% include "snippet/likes.html" %}
-		</div>
-
+		{% include "snippet/post-display.html" %}
 		{% include "snippet/comment-section.html" %}
 
 

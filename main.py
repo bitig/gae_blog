@@ -55,8 +55,10 @@ class Handler(webapp2.RequestHandler):
         t = jinja_env.get_template(template)
         return t.render(params)
 
-    def render(self, template, **kw):
-        self.write(self.render_str(template, user = self.user, **kw))
+    def render(self, template, user = None, **kw):
+        if not user:
+            user = self.user
+        self.write(self.render_str(template, user = user, **kw))
 
     # generic methods to set/read any cookies
     def set_secure_cookie(self, name, val):
@@ -226,7 +228,7 @@ class SubmitHandler(Handler):
                         self.redirect_to_login()
                 else:
                     # create a new post
-                    post = Post(title = title, content = content, owner_id = self.user.get_id(), owner = self.user)
+                    post = Post(title = title, content = content, owner_id = str(self.user.get_id()), owner = self.user)
                     post.put()
                     self.redirect(HOME_PATH + '/' + str(post.key().id()) + '/')
             else:
@@ -338,7 +340,7 @@ class LoginPage(Handler):
         if user:
             if user.verify_pw(password):
                 self.set_login_cookie(user)
-                self.render('welcome.html', username = username)
+                self.render('welcome.html', user = user)
             else:
                 errors.append('Invalid password.')
                 self.render_form(username = username, errors = errors)

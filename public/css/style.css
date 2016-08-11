@@ -6,3 +6,71 @@ body {
 h1, h2, h3, h4, h5, h6 {
 	font-family: Nixie One, Courier, cursive;
 }
+
+header {
+	width: 100%;
+	margin: 0 auto;
+}
+
+.blog__title {
+	font-size: xx-large;
+	font-family: Nixie One, Courier, cursive;
+	font-weight: bold;
+	text-align:center;
+}
+
+.blog__user-info {
+	font-family: Roboto, Courier, cursive;
+	width: auto;
+	margin: 0 auto;
+	text-align: center;
+}
+
+.container {
+	max-width: 960px;
+	margin: 3em auto;
+	margin: 0 auto;
+}
+
+.posts_post {
+	margin-top: 3em;
+}
+
+.posts_post-title {
+	text-align: center;
+}
+
+.posts_post-date {
+	font-style: italic;
+	font-family: Nixie One, Courier, cursive;
+	font-size: large;
+	color: gray;
+	text-align:center;
+}
+
+.posts_post-text {
+	margin-top: 2em;
+	font-size: large;
+}
+
+.likes__count-number, .likes__count-label {
+	font-size: 20px;
+}
+
+.comments__wrapper {
+	margin-top: 3em;
+}
+
+.comments__list {
+	margin-top: 2em;
+}
+
+.comments__comment-user {
+	font-weight: bold;
+	font-size: large;
+}
+
+.comments__comment-text {
+	margin-top: 0.5em;
+	font-size: large;
+}
