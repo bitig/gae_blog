@@ -46,7 +46,7 @@ def check_secure_val(secure_val):
 
 # parent handler extends webapp2.RequestHandler with convenience methods
 class Handler(webapp2.RequestHandler):
-    # shorthand write
+    # shorthand out.write
     def write(self, *a, **kw):
         self.response.out.write(*a, **kw)
 
@@ -55,6 +55,9 @@ class Handler(webapp2.RequestHandler):
         t = jinja_env.get_template(template)
         return t.render(params)
 
+    # render renders a template...
+    # the optional user param alows a user to be passed to the template
+    # before self.user is set, which is the case during login
     def render(self, template, user = None, **kw):
         if not user:
             user = self.user
@@ -77,7 +80,6 @@ class Handler(webapp2.RequestHandler):
     def remove_login_cookie(self):
         self.response.headers.add_header('Set-Cookie', 'user_id=; Path=/')
 
-    # redirects to login
     def redirect_to_login(self):
         self.redirect(HOME_PATH + '/login/')
 
@@ -91,12 +93,17 @@ class Handler(webapp2.RequestHandler):
 
     def initialize(self, *a, **kw):
         webapp2.RequestHandler.initialize(self, *a, **kw)
-        # set user on every request
+        # set self.user on every request if user is logged in
         uid = self.logged_in()
         self.user = uid and User.by_id(int(uid))
 
 
 class User(db.Model):
+    ''' User is the user model for the app
+
+        I'm using bcrypt to hash pws, which is more secure (and easier)
+        than using hmac + generating salts
+    '''
     username = db.StringProperty(required = True)
     password = db.TextProperty(required = True)
     email = db.StringProperty(required = True)
@@ -134,12 +141,15 @@ class Post(db.Model):
     like_count = db.IntegerProperty(default = 0)
     likes = db.StringListProperty()
 
+    # shorthand method to get post id
     def get_id(self):
         return self.key().id()
 
+    # replace plaintext line breaks with html line break
     def render(self):
         return self.content.replace('\n', '<br>')
 
+    # renders first 500 chars of a post, for front page listing of posts
     def render_snippet(self):
         if len(self.content) > 500:
             return self.content[:500].replace('\n', '<br>') + '...'
@@ -149,11 +159,13 @@ class Post(db.Model):
     def get_likes(self):
         return self.likes
 
+    # add a new like to a post
     def like(self, user_id):
         self.like_count += 1
         self.likes.append(str(user_id))
         print(str(user_id) + 'liked the thing')
 
+    # determine if a user has already liked a post
     def already_liked(self, user_id):
         print self.likes
         if self.likes.count(str(user_id)) > 0:
@@ -263,6 +275,9 @@ class EditPost(SubmitHandler):
 
 
 class BlogPage(Handler):
+    ''' BlogPage renders a specific post
+        The "digits" param is the requested post id
+    '''
 
     def get(self, digits):
         requested_id = int(digits)
@@ -356,6 +371,14 @@ class Logout(Handler):
 
 
 class LikeHandler(Handler):
+    ''' LikeHandler allows users to like posts
+
+        The post method is called asyncronously on the front-end and the post
+        method returns an appropriate status based on whether the user is logged in
+        and whether the post is a real post.
+
+        Users can't like their own posts or like posts >1 times
+    '''
 
     def post(self, digits):
         post_id = digits
@@ -386,6 +409,12 @@ class LikeHandler(Handler):
 
 
 class CommentHandler(Handler):
+    ''' CommentHandler allows users to comment on posts
+
+        The post method is called asyncronously on the front-end and the post
+        method returns an appropriate status based on whether the user is logged in
+        and whether the post is a real post.
+    '''
     def post(self, digits):
         post_id = digits
         message = self.request.body
@@ -403,6 +432,7 @@ class CommentHandler(Handler):
             self.response.set_status(403)
             self.response.write('You must log in to comment.')
 
+# allows a logged in user to delete a post they own
 class DeleteHandler(Handler):
     def post(self, post_id):
 
