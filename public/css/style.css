@@ -43,20 +43,22 @@ header {
 	margin-top: 3em;
 }
 
-.posts_post-title {
-	text-align: center;
-}
-
 .posts_post-date {
 	font-style: italic;
 	font-family: Nixie One, Courier, cursive;
 	font-size: large;
 	color: gray;
-	text-align:center;
+}
+
+.posts_post-poster {
+	font-family: Nixie One, Courier, cursive;
+	font-size: x-large;
+	color: gray;
+	margin: 1em 0 0.25em 0;
 }
 
 .posts_post-text {
-	margin-top: 2em;
+	margin: 2em 0;
 	font-size: large;
 }
 

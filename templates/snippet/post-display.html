@@ -1,8 +1,11 @@
 <div class="posts_post">
-	<h1 class="posts_post-title">
+	<h1 class="posts_post-title text-center">
 		<a href="/blog/{{ post.get_id() }}/">{{ post.title }}</a>
 	</h1>
-	<div class="posts_post-date">
+	<div class="posts_post-poster text-center">
+		by {{ post.owner.username }}
+	</div>
+	<div class="posts_post-date text-center">
 		{{post.create_date.strftime('%B %d %Y')}}
 	</div>
 

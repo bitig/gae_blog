@@ -141,8 +141,8 @@ class Post(db.Model):
         return self.content.replace('\n', '<br>')
 
     def render_snippet(self):
-        if len(self.content) > 150:
-            return self.content[:150].replace('\n', '<br>') + '...'
+        if len(self.content) > 500:
+            return self.content[:500].replace('\n', '<br>') + '...'
         else:
             return self.content.replace('\n', '<br>')
 
@@ -316,14 +316,14 @@ class SignupPage(Handler):
             user = User.register(username, password, email)
             user.put()
             self.set_login_cookie(user)
-            self.redirect(HOME_PATH + '/welcome')
+            self.redirect(HOME_PATH + '/welcome/')
 
 class WelcomePage(Handler):
     def get(self):
         if self.user:
             self.render("welcome.html", username = self.user.username)
         else:
-            self.redirect(HOME_PATH + '/signup')
+            self.redirect(HOME_PATH + '/signup/')
 
 class LoginPage(Handler):
     def render_form(self, username = '', errors = ''):
