@@ -403,7 +403,19 @@ class CommentHandler(Handler):
             self.response.set_status(403)
             self.response.write('You must log in to comment.')
 
+class DeleteHandler(Handler):
+    def post(self, post_id):
 
+        if post_id and post_id.isdigit():
+            post = Post.get_by_id(int(post_id))
+
+
+        if self.user and post and post.owner_id == str(self.user.get_id()):
+            title = post.title
+            db.delete(post.key())
+            self.render("deleted.html", title = title) # TODO: better user feedback
+        else:
+            self.redirect_to_login()
 
 
 
@@ -419,5 +431,6 @@ app = webapp2.WSGIApplication([
     (HOME_PATH + '/signup/', SignupPage),
     (HOME_PATH + '/welcome/', WelcomePage),
     (HOME_PATH + '/like/(\d+)/', LikeHandler),
-    (HOME_PATH + '/comment/(\d+)/', CommentHandler)
+    (HOME_PATH + '/comment/(\d+)/', CommentHandler),
+    (HOME_PATH + '/delete/(\d+)/', DeleteHandler)
     ], debug = True)
