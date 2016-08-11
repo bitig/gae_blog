@@ -1,10 +1,10 @@
+/* global $ */
+
 var like = function(event){
 
-	console.log('hi')
-	post_id = event.srcElement.attributes["data-id"].nodeValue;
-	console.log(post_id)
+	var post_id = event.srcElement.attributes["data-id"].nodeValue;
 
-	status_message = $('.likes__button-message[data-id="' + post_id + '"]')
+	var status_message = $('.likes__button-message[data-id="' + post_id + '"]');
 
 	$.ajax(
 		{
@@ -23,12 +23,11 @@ var like = function(event){
 		}
 	);
 
-}
+};
 
 var comment = function(event){
 
-	post_id = event.srcElement.attributes["data-id"].nodeValue;
-	console.log(post_id)
+	var post_id = event.srcElement.attributes["data-id"].nodeValue;
 
 	$.ajax(
 		{
@@ -42,7 +41,7 @@ var comment = function(event){
 			success: function(data, status, xhr){
 				$('.comments__submit-status').css('color', 'green').html('Success!');
 				var comment_el = $('.comments__list[data-id="' + post_id + '"]');
-				new_comment = comment_el.append(data);
+				var new_comment = comment_el.append(data);
 				new_comment.addClass('comments__freshly-posted');
 			},
 			error: function(xhr, status){
@@ -57,16 +56,37 @@ var comment = function(event){
 		}
 	);
 
-}
+};
+
 
 $('.likes__submit').on('click', '.likes__button', function(event){
 	like(event);
 });
 
 $('.comments__wrapper').on('click', '.comments__submit-button', function(event){
-	text = $('.comments__textarea').val();
-	console.log(text);
+	var text = $('.comments__textarea').val();
 	if(text != ''){
 		comment(event);
 	}
+});
+
+
+
+
+var editComment = function(event){
+	var comment_id = event.srcElement.attributes["data-comment"].nodeValue;
+	console.log(comment_id);
+};
+
+var deleteComment = function(event){
+	var comment_id = event.srcElement.attributes["data-comment"].nodeValue;
+	console.log(comment_id);
+};
+
+$('.comments__comment-edit').on('click', function(event){
+	editComment(event);
+});
+
+$('.comments__comment-delete').on('click', function(event){
+	deleteComment(event);
 });

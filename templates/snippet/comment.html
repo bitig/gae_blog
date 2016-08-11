@@ -1,11 +1,19 @@
 
 <hr>
 
-<div class="comments__comment-text">
+<div class="comments__comment-text" data-comment="{{ comment.key().id() }}">
 	{{ comment.comment }}
 </div>
 
 <div class="comments__comment-info">
 	<span class="comments__comment-user">{{ comment.username }}</span>
-	<span style="font-size:small" class="comments__coment-date pull-right">{{ comment.create_date.strftime('%B %d %Y') }}</span>
+	<div class="pull-right">
+		<span style="font-size:small" class="comments__coment-date pull-right">{{ comment.create_date.strftime('%B %d %Y') }}</span>
+	</div>
+	{% if user.get_id() == comment.user.get_id() %}
+		<div class="text-center" style="">
+			<button class="btn btn-warning btn-sm comments__comment-edit" data-comment="{{ comment.key().id() }}">Edit</button>
+			<button class="btn btn-danger btn-sm comments__comment-delete" data-comment="{{ comment.key().id() }}">Delete</button>
+		</div>
+	{% endif %}
 </div>
