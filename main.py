@@ -128,9 +128,12 @@ class SubmitHandler(Handler):
             post = Post.get_by_id(post_id)
         return post
 
-    def render_form(self, title='', content='', title_error='', content_error=''):
+    def render_form(self, title='', content='', title_error='',
+                    content_error='', post_id = ''):
         self.render("form.html", title=title, content=content,
-                    title_error=title_error, content_error=content_error)
+                    title_error=title_error,
+                    content_error=content_error,
+                    post_id=post_id)
 
     def post(self, post_id=None):
         if self.user:
@@ -186,7 +189,9 @@ class EditPost(SubmitHandler):
         post = self.get_post(id_str)
         # you can edit if you are logged in, give a valid post, and are owner
         if post and self.user and int(post.owner_id) == self.user.get_id():
-            self.render("form.html", title=post.title, content=post.content)
+            self.render("form.html", title=post.title,
+                        content=post.content,
+                        post_id=str(post.get_id()))
         else:
             self.redirect(HOME_PATH + '/login/')
 

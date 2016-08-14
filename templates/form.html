@@ -14,6 +14,13 @@
 			<textarea class="form-control" rows="10" id="post-content" name="content" >{{content}}</textarea>
 			<span style="color:red">{{content_error}}<span>
 		</div>
+
+		{% if post_id %}
+			<a href="/blog/{{ post_id }}/" class="btn btn-default pull-left">Cancel</a>
+		{% else %}
+			<a href="/blog/" class="btn btn-default pull-left">Cancel</a>
+		{% endif %}
+
 		<input type="submit" class="btn btn-success pull-right">
 
 	</form>
