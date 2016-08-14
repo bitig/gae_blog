@@ -28,24 +28,29 @@ HOME_PATH = '/blog'
 # initialize jinga2
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_env = jinja2.Environment(
-                            loader = jinja2.FileSystemLoader(template_dir),
-                            autoescape = True
-                            )
+    loader=jinja2.FileSystemLoader(template_dir),
+    autoescape=True
+)
 
 # secret for secure cookie has - should not be here in a production server
 secret = 'rastfydguhiujimiqwo'
 
-# secure cookies
+
 def make_secure_val(val):
     return '%s|%s' % (val, hmac.new(secret, val).hexdigest())
+
 
 def check_secure_val(secure_val):
     val = secure_val.split('|')[0]
     if secure_val == make_secure_val(val):
         return val
 
-# parent handler extends webapp2.RequestHandler with convenience methods
+
 class Handler(webapp2.RequestHandler):
+    '''
+    parent handler extends webapp2.RequestHandler with convenience methods
+    '''
+
     # shorthand out.write
     def write(self, *a, **kw):
         self.response.out.write(*a, **kw)
@@ -58,10 +63,10 @@ class Handler(webapp2.RequestHandler):
     # render renders a template...
     # the optional user param alows a user to be passed to the template
     # before self.user is set, which is the case during login
-    def render(self, template, user = None, **kw):
+    def render(self, template, user=None, **kw):
         if not user:
             user = self.user
-        self.write(self.render_str(template, user = user, **kw))
+        self.write(self.render_str(template, user=user, **kw))
 
     # generic methods to set/read any cookies
     def set_secure_cookie(self, name, val):
@@ -83,7 +88,7 @@ class Handler(webapp2.RequestHandler):
     def redirect_to_login(self):
         self.redirect(HOME_PATH + '/login/')
 
-    # return the unsecured user_id if the user is logged in, otherwise return None
+    # return the unsecured user_id if the user is logged in
     def logged_in(self):
         secure_uid = self.read_secure_cookie('user_id')
         if secure_uid:
@@ -104,12 +109,11 @@ class User(db.Model):
         I'm using bcrypt to hash pws, which is more secure (and easier)
         than using hmac + generating salts
     '''
-    username = db.StringProperty(required = True)
-    password = db.TextProperty(required = True)
-    email = db.StringProperty(required = True)
-    create_date = db.DateTimeProperty(auto_now_add = True)
+    username = db.StringProperty(required=True)
+    password = db.TextProperty(required=True)
+    email = db.StringProperty(required=True)
+    create_date = db.DateTimeProperty(auto_now_add=True)
 
-    # @classmethod
     def verify_pw(self, password):
         if bcrypt.hashpw(password, self.password) == self.password:
             return True
@@ -126,19 +130,20 @@ class User(db.Model):
         return User.all().filter('username = ', name).get()
 
     @classmethod
-    def register(cls, username, password, email = None):
+    def register(cls, username, password, email=None):
         hashed_pw = bcrypt.hashpw(password, bcrypt.gensalt())
-        user = User(username = username, password = hashed_pw, email = email)
+        user = User(username=username, password=hashed_pw, email=email)
         return user
 
+
 class Post(db.Model):
-    title = db.StringProperty(required = True)
-    content = db.TextProperty(required = True)
-    create_date = db.DateTimeProperty(auto_now_add = True)
+    title = db.StringProperty(required=True)
+    content = db.TextProperty(required=True)
+    create_date = db.DateTimeProperty(auto_now_add=True)
     owner = db.ReferenceProperty(User)
     owner_id = db.StringProperty()
-    modified_date = db.DateTimeProperty(auto_now = True)
-    like_count = db.IntegerProperty(default = 0)
+    modified_date = db.DateTimeProperty(auto_now=True)
+    like_count = db.IntegerProperty(default=0)
     likes = db.StringListProperty()
 
     # shorthand method to get post id
@@ -181,30 +186,34 @@ class Post(db.Model):
 
 
 class Comment(db.Model):
-    comment = db.TextProperty(required = True)
-    user = db.ReferenceProperty(User, collection_name = 'comments', required = True)
-    post = db.ReferenceProperty(Post, collection_name = 'comments', required = True)
-    username = db.StringProperty(required = True)
-    create_date = db.DateTimeProperty(auto_now_add = True)
+    comment = db.TextProperty(required=True)
+    user = db.ReferenceProperty(
+        User, collection_name='comments', required=True)
+    post = db.ReferenceProperty(
+        Post, collection_name='comments', required=True)
+    username = db.StringProperty(required=True)
+    create_date = db.DateTimeProperty(auto_now_add=True)
 
     @classmethod
-    def get_comments(cls, post = None):
+    def get_comments(cls, post=None):
         if post:
             return cls.all().filter('post = ', post).run()
         else:
             return cls.all().run()
 
+
 class MainPage(Handler):
 
-    def render_front(self, title = "", blog = "", error = ""):
+    def render_front(self, title="", blog="", error=""):
         posts = db.GqlQuery('SELECT * FROM Post')
         print(posts)
         if not posts:
             error = 'Sorry, there are no posts on the blog yet.'
-        self.render("blog.html", error = error, posts = posts)
+        self.render("blog.html", error=error, posts=posts)
 
     def get(self):
         self.render_front()
+
 
 class SubmitHandler(Handler):
 
@@ -217,10 +226,11 @@ class SubmitHandler(Handler):
             post = Post.get_by_id(post_id)
         return post
 
-    def render_form(self, title = '', content = '', title_error = '', content_error = ''):
-        self.render("form.html", title = title, content = content, title_error = title_error, content_error = content_error)
+    def render_form(self, title='', content='', title_error='', content_error=''):
+        self.render("form.html", title=title, content=content,
+                    title_error=title_error, content_error=content_error)
 
-    def post(self, post_id = None):
+    def post(self, post_id=None):
         if self.user:
 
             title = self.request.get('subject')
@@ -235,12 +245,14 @@ class SubmitHandler(Handler):
                         post.title = title
                         post.content = content
                         post.put()
-                        self.redirect(HOME_PATH + '/' + str(post.key().id()) + '/')
+                        self.redirect(HOME_PATH + '/' +
+                                      str(post.key().id()) + '/')
                     else:
                         self.redirect_to_login()
                 else:
                     # create a new post
-                    post = Post(title = title, content = content, owner_id = str(self.user.get_id()), owner = self.user)
+                    post = Post(title=title, content=content, owner_id=str(
+                        self.user.get_id()), owner=self.user)
                     post.put()
                     self.redirect(HOME_PATH + '/' + str(post.key().id()) + '/')
             else:
@@ -250,9 +262,11 @@ class SubmitHandler(Handler):
                     title_error = 'Title is required!'
                 if not content:
                     content_error = 'Content is required!'
-                self.render_form(title, content, title_error = title_error, content_error = content_error)
+                self.render_form(
+                    title, content, title_error=title_error, content_error=content_error)
         else:
             self.redirect_to_login()
+
 
 class NewPost(SubmitHandler):
 
@@ -262,6 +276,7 @@ class NewPost(SubmitHandler):
         else:
             self.redirect_to_login()
 
+
 class EditPost(SubmitHandler):
 
     def get(self, id_str):
@@ -269,7 +284,7 @@ class EditPost(SubmitHandler):
         post = self.get_post(id_str)
         # you can edit if you are logged in, give a valid post, and are owner
         if post and self.user and int(post.owner_id) == self.user.get_id():
-            self.render("form.html", title = post.title, content = post.content)
+            self.render("form.html", title=post.title, content=post.content)
         else:
             self.redirect(HOME_PATH + '/login/')
 
@@ -289,14 +304,16 @@ class BlogPage(Handler):
         if not post:
             error = 'Requested post not found :('
         if comments:
-            self.render("post.html", error = error, post = post, comments = comments)
+            self.render("post.html", error=error, post=post, comments=comments)
         else:
-            self.render("post.html", error = error, post = post)
+            self.render("post.html", error=error, post=post)
 
 
 class SignupPage(Handler):
-    def render_form(self, username = '', email = '', errors = ''):
-        self.render("signup.html", username = username, email = email, errors = errors)
+
+    def render_form(self, username='', email='', errors=''):
+        self.render("signup.html", username=username,
+                    email=email, errors=errors)
 
     def get(self):
         self.render_form()
@@ -333,16 +350,20 @@ class SignupPage(Handler):
             self.set_login_cookie(user)
             self.redirect(HOME_PATH + '/welcome/')
 
+
 class WelcomePage(Handler):
+
     def get(self):
         if self.user:
-            self.render("welcome.html", username = self.user.username)
+            self.render("welcome.html", username=self.user.username)
         else:
             self.redirect(HOME_PATH + '/signup/')
 
+
 class LoginPage(Handler):
-    def render_form(self, username = '', errors = ''):
-        self.render("login.html", username = username, errors = errors)
+
+    def render_form(self, username='', errors=''):
+        self.render("login.html", username=username, errors=errors)
 
     def get(self):
         self.render_form()
@@ -355,13 +376,14 @@ class LoginPage(Handler):
         if user:
             if user.verify_pw(password):
                 self.set_login_cookie(user)
-                self.render('welcome.html', user = user)
+                self.render('welcome.html', user=user)
             else:
                 errors.append('Invalid password.')
-                self.render_form(username = username, errors = errors)
+                self.render_form(username=username, errors=errors)
         else:
             errors.append('No user with that username was found.')
-            self.render_form(username = username, errors = errors)
+            self.render_form(username=username, errors=errors)
+
 
 class Logout(Handler):
 
@@ -405,7 +427,7 @@ class LikeHandler(Handler):
         else:
             message = 'You must <a href="/blog/login/">sign in</a> or <a href="/blog/signup/">create an account</a> to comment.'
 
-        self.render('snippet/likes.html', post = post, message = message)
+        self.render('snippet/likes.html', post=post, message=message)
 
 
 class CommentHandler(Handler):
@@ -415,6 +437,7 @@ class CommentHandler(Handler):
         method returns an appropriate status based on whether the user is logged in
         and whether the post is a real post.
     '''
+
     def post(self, digits):
         post_id = digits
         message = self.request.body
@@ -422,33 +445,35 @@ class CommentHandler(Handler):
         if self.user and post_id.isdigit():
             post = Post.get_by_id(int(post_id))
             if post and self.user and message:
-                comment = Comment(username = self.user.username, user = self.user, post = post, comment = message)
+                comment = Comment(username=self.user.username,
+                                  user=self.user, post=post, comment=message)
                 comment.put()
-                self.render("snippet/comment.html", comment = comment, post = post)
+                self.render("snippet/comment.html", comment=comment, post=post)
             else:
                 self.response.set_status(422)
-                self.response.write('There was a problem with the requested post, user, or comment.')
+                self.response.write(
+                    'There was a problem with the requested post, user, or comment.')
         else:
             self.response.set_status(403)
             self.response.write('You must log in to comment.')
 
 # allows a logged in user to delete a post they own
+
+
 class DeleteHandler(Handler):
+
     def post(self, post_id):
 
         if post_id and post_id.isdigit():
             post = Post.get_by_id(int(post_id))
 
-
         if self.user and post and post.owner_id == str(self.user.get_id()):
             title = post.title
             db.delete(post.key())
-            self.render("deleted.html", title = title) # TODO: better user feedback
+            # TODO: better user feedback
+            self.render("deleted.html", title=title)
         else:
             self.redirect_to_login()
-
-
-
 
 
 app = webapp2.WSGIApplication([
@@ -463,4 +488,4 @@ app = webapp2.WSGIApplication([
     (HOME_PATH + '/like/(\d+)/', LikeHandler),
     (HOME_PATH + '/comment/(\d+)/', CommentHandler),
     (HOME_PATH + '/delete/(\d+)/', DeleteHandler)
-    ], debug = True)
+], debug=True)
