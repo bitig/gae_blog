@@ -98,3 +98,6 @@ class Comment(db.Model):
             return cls.all().filter('post = ', post).run()
         else:
             return cls.all().run()
+
+    def render(self):
+        return self.comment.replace('\n', '<br>')

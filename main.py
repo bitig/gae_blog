@@ -377,7 +377,7 @@ class CommentHandler(Handler):
                 new_comment = self.request.body
                 comment.comment = new_comment
                 comment.put()
-                self.response.write(comment.comment)
+                self.response.write(comment.render())
             else:
                 self.response.set_status('403')
                 self.response.write('Unsuccessful. No comment included in request.')

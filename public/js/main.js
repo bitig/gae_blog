@@ -93,19 +93,18 @@ $('.comments__list').on('click', '.comments__comment-delete', function(event){
 	deleteComment(event);
 });
 
-
 var editComment = function(event){
 	var comment_id = event.srcElement.attributes["data-comment"].nodeValue;
 	var comment_text_el = $('.comments__comment-text[data-comment="' + comment_id + '"]');
 	var comment_info_el = $('.comments__comment-info[data-comment="' + comment_id + '"]');
 
-	var old_comment_text = comment_text_el.text();
+	var old_comment_text = comment_text_el.html();
 	var old_comment_info = comment_info_el.html();
 
 	/* replace comment text with textarea */
 	$('.comments__comment-text[data-comment="' + comment_id + '"]').html(
-		'<div class="form-group"><label>Edit Comment</label><textarea class="form-control comment__editor" data-comment="' + comment_id + '">'
-		+ old_comment_text + '</textarea></div>'
+		'<div class="form-group"><label>Edit Comment</label><textarea rows=5 class="form-control comment__editor" data-comment="' + comment_id + '">'
+		+ old_comment_text.replace(/<br>/g, "\n") + '</textarea></div>'
 	);
 
 	/* replace comment info with submit button */
