@@ -338,15 +338,18 @@ class LikeHandler(Handler):
 
 
 class CommentHandler(Handler):
-    ''' CommentHandler allows users to comment on posts
+    ''' CommentHandler allows CRUD on comments
 
         The post method is called asyncronously on the front-end and the post
         method returns an appropriate status based on whether the user is logged in
         and whether the post is a real post.
+
+        Using the same endpoint for posting and editing/deleting comments
+        is a little confusing. the comment endpoint takes a
+        comment_id param for put and delete and a post_id for post...
     '''
 
-    def post(self, digits):
-        post_id = digits
+    def post(self, post_id):
         message = self.request.body
 
         if self.user and post_id.isdigit():
@@ -364,9 +367,37 @@ class CommentHandler(Handler):
             self.response.set_status(403)
             self.response.write('You must log in to comment.')
 
+    def put(self, comment_id):
+
+        if comment_id and comment_id.isdigit():
+            comment = Comment.get_by_id(int(comment_id))
+
+        if self.user and comment and comment.user.get_id() == self.user.get_id():
+            if self.request.body:
+                new_comment = self.request.body
+                comment.comment = new_comment
+                comment.put()
+                self.response.write(comment.comment)
+            else:
+                self.response.set_status('403')
+                self.response.write('Unsuccessful. No comment included in request.')
+        else:
+            self.response.set_status('403')
+            self.response.write('Unsuccessful. Post not found or user not logged in.')
+
+    def delete(self, comment_id):
+
+        if comment_id and comment_id.isdigit():
+            comment = Comment.get_by_id(int(comment_id))
+
+        if self.user and comment and comment.user.get_id() == self.user.get_id():
+            db.delete(comment.key())
+            self.response.write('Success! Deleted!')
+        else:
+            self.response.set_status('403')
+            self.response.write('Unsuccessful. Post not found or user not logged in.')
+
 # allows a logged in user to delete a post they own
-
-
 class DeleteHandler(Handler):
 
     def post(self, post_id):
