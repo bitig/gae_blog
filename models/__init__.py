@@ -1,5 +1,7 @@
+
 from lib.py_bcrypt import bcrypt
 from google.appengine.ext import db
+
 
 class User(db.Model):
     ''' User is the user model for the app
@@ -35,6 +37,10 @@ class User(db.Model):
 
 
 class Post(db.Model):
+    '''
+        Post is the model for blog posts
+    '''
+
     title = db.StringProperty(required=True)
     content = db.TextProperty(required=True)
     create_date = db.DateTimeProperty(auto_now_add=True)
@@ -84,12 +90,17 @@ class Post(db.Model):
 
 
 class Comment(db.Model):
+    '''
+        Posts can have Comments related to them posted by Users
+        As such Comments have two reference properties: user and post
+
+        Probably good to add a modified date in the future...
+    '''
     comment = db.TextProperty(required=True)
     user = db.ReferenceProperty(
         User, collection_name='comments', required=True)
     post = db.ReferenceProperty(
         Post, collection_name='comments', required=True)
-    username = db.StringProperty(required=True)
     create_date = db.DateTimeProperty(auto_now_add=True)
 
     @classmethod
