@@ -415,15 +415,15 @@ class DeleteHandler(Handler):
 
 
 app = webapp2.WSGIApplication([
-    (HOME_PATH + '/', MainPage),
-    (HOME_PATH + '/newpost/', NewPost),
-    (HOME_PATH + '/edit/(\d+)/', EditPost),
-    (HOME_PATH + '/(\d+)/', BlogPage),
-    (HOME_PATH + '/login/', LoginPage),
-    (HOME_PATH + '/logout/', Logout),
-    (HOME_PATH + '/signup/', SignupPage),
-    (HOME_PATH + '/welcome/', WelcomePage),
-    (HOME_PATH + '/like/(\d+)/', LikeHandler),
-    (HOME_PATH + '/comment/(\d+)/', CommentHandler),
-    (HOME_PATH + '/delete/(\d+)/', DeleteHandler)
+    (HOME_PATH + '/?', MainPage),
+    (HOME_PATH + '/newpost/?', NewPost),
+    (HOME_PATH + '/edit/(\d+)/?', EditPost),
+    (HOME_PATH + '/(\d+)/?', BlogPage),
+    (HOME_PATH + '/login/?', LoginPage),
+    (HOME_PATH + '/logout/?', Logout),
+    (HOME_PATH + '/signup/?', SignupPage),
+    (HOME_PATH + '/welcome/?', WelcomePage),
+    (HOME_PATH + '/like/(\d+)/?', LikeHandler),
+    (HOME_PATH + '/comment/(\d+)/?', CommentHandler),
+    (HOME_PATH + '/delete/(\d+)/?', DeleteHandler)
 ], debug=True)
