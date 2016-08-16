@@ -414,7 +414,14 @@ class DeleteHandler(Handler):
             self.redirect_to_login()
 
 
+class RedirectHome(Handler):
+
+    def get(self):
+        self.redirect(HOME_PATH)
+
+
 app = webapp2.WSGIApplication([
+    ('/?', RedirectHome),
     (HOME_PATH + '/?', MainPage),
     (HOME_PATH + '/newpost/?', NewPost),
     (HOME_PATH + '/edit/(\d+)/?', EditPost),
