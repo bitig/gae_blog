@@ -2,7 +2,7 @@
 
 var like = function(event){
 
-	var post_id = event.srcElement.attributes["data-id"].nodeValue;
+	var post_id = event.target.attributes["data-id"].value;
 
 	var status_message = $('.likes__button-message[data-id="' + post_id + '"]');
 
@@ -27,7 +27,8 @@ var like = function(event){
 
 var comment = function(event){
 
-	var post_id = event.srcElement.attributes["data-id"].nodeValue;
+	console.log(event);
+	var post_id = event.target.attributes["data-id"].value;
 
 	$.ajax(
 		{
@@ -71,7 +72,7 @@ $('.comments__wrapper').on('click', '.comments__submit-button', function(event){
 });
 
 var deleteComment = function(event){
-	var comment_id = event.srcElement.attributes["data-comment"].nodeValue;
+	var comment_id = event.target.attributes["data-comment"].value;
 
 	$.ajax(
 		{
@@ -94,7 +95,7 @@ $('.comments__list').on('click', '.comments__comment-delete', function(event){
 });
 
 var editComment = function(event){
-	var comment_id = event.srcElement.attributes["data-comment"].nodeValue;
+	var comment_id = event.target.attributes["data-comment"].value;
 	var comment_text_el = $('.comments__comment-text[data-comment="' + comment_id + '"]');
 	var comment_info_el = $('.comments__comment-info[data-comment="' + comment_id + '"]');
 
