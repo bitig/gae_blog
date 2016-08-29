@@ -106,15 +106,38 @@ class Handler(webapp2.RequestHandler):
 
 class MainPage(Handler):
 
-    def render_front(self, title="", blog="", error=""):
-        posts = db.GqlQuery('SELECT * FROM Post')
-        print(posts)
-        if not posts:
-            error = 'Sorry, there are no posts on the blog yet.'
-        self.render("blog.html", error=error, posts=posts)
-
     def get(self):
-        self.render_front()
+        self.redirect(HOME_PATH + '/page/1')
+
+class BlogListings(Handler):
+
+    def render_front(self, page, title="", blog="", error=""):
+        pagination = 5 # number of posts per page
+        if not page.isdigit():
+            page = 1
+        else:
+            page = int(page)
+        posts = db.Query(Post).order('-create_date').run(
+                                limit=pagination,
+                                offset=(page - 1) * pagination
+                                )
+        next_page = None
+        prev_page = None
+        if db.Query(Post).order('-create_date').get(offset = page * pagination):
+            print('found next page')
+            next_page = page + 1
+        if int(page) > 1 and db.Query(Post).order('-create_date').get(offset=((page - 1) * pagination) - 1):
+            prev_page = page - 1
+        if not posts:
+            print('found prev page')
+            error = 'There are no posts yet.'
+        self.render("blog.html", error=error, posts=posts,
+                    prev_page=prev_page,
+                    next_page=next_page)
+
+    def get(self, page):
+        print(page)
+        self.render_front(page)
 
 
 class SubmitHandler(Handler):
@@ -423,6 +446,7 @@ class RedirectHome(Handler):
 app = webapp2.WSGIApplication([
     ('/?', RedirectHome),
     (HOME_PATH + '/?', MainPage),
+    (HOME_PATH + '/page/(\d+)/?', BlogListings),
     (HOME_PATH + '/newpost/?', NewPost),
     (HOME_PATH + '/edit/(\d+)/?', EditPost),
     (HOME_PATH + '/(\d+)/?', BlogPage),

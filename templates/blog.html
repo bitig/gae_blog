@@ -12,6 +12,16 @@
 
 			{% endfor %}
 
+			<div class="pagination">
+				{% if prev_page %}
+					<div class"pull-left"><a href="{{ prev_page }}">Prev Page</a></div>
+				{% endif %}
+
+				{% if next_page %}
+					<div class"push-right"><a href="{{ next_page }}">Next Page</a></div>
+				{% endif %}
+			</div>
+
 
 		{% else %}
 			<div style="text-align:center;color:red">{{error}}</div>
