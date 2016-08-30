@@ -21,7 +21,7 @@ import hmac
 import random
 from models import User, Post, Comment
 from lib.py_bcrypt import bcrypt
-from google.appengine.ext import db
+from google.appengine.ext import ndb
 
 # root dir of blog
 HOME_PATH = '/blog'
@@ -117,16 +117,12 @@ class BlogListings(Handler):
             page = 1
         else:
             page = int(page)
-        posts = db.Query(Post).order('-create_date').run(
-                                limit=pagination,
-                                offset=(page - 1) * pagination
-                                )
+        posts, cur, more = Post.query().order(-Post.create_date).fetch_page(pagination, offset=(page - 1) * pagination)
         next_page = None
         prev_page = None
-        if db.Query(Post).order('-create_date').get(offset = page * pagination):
-            print('found next page')
+        if more:
             next_page = page + 1
-        if int(page) > 1 and db.Query(Post).order('-create_date').get(offset=((page - 1) * pagination) - 1):
+        if page > 1:
             prev_page = page - 1
         if not posts:
             print('found prev page')
@@ -174,15 +170,15 @@ class SubmitHandler(Handler):
                         post.content = content
                         post.put()
                         self.redirect(HOME_PATH + '/' +
-                                      str(post.key().id()) + '/')
+                                      str(post.get_id()) + '/')
                     else:
                         self.redirect_to_login()
                 else:
                     # create a new post
                     post = Post(title=title, content=content, owner_id=str(
-                        self.user.get_id()), owner=self.user)
+                        self.user.get_id()), owner=self.user.key)
                     post.put()
-                    self.redirect(HOME_PATH + '/' + str(post.key().id()) + '/')
+                    self.redirect(HOME_PATH + '/' + str(post.get_id()) + '/')
             else:
                 title_error = ''
                 content_error = ''
@@ -226,11 +222,10 @@ class BlogPage(Handler):
 
     def get(self, digits):
         requested_id = int(digits)
-        key = db.Key.from_path('Model', requested_id)
-        post = db.get(key)
         post = Post.get_by_id(requested_id)
         error = ''
         comments = Comment.get_comments(post)
+        print(comments)
         if not post:
             error = 'Requested post not found :('
         if comments:
@@ -378,8 +373,7 @@ class CommentHandler(Handler):
         if self.user and post_id.isdigit():
             post = Post.get_by_id(int(post_id))
             if post and self.user and message:
-                comment = Comment(username=self.user.username,
-                                  user=self.user, post=post, comment=message)
+                comment = Comment(user=self.user.key, post=post.key, comment=message)
                 comment.put()
                 self.render("snippet/comment.html", comment=comment, post=post)
             else:
@@ -395,7 +389,7 @@ class CommentHandler(Handler):
         if comment_id and comment_id.isdigit():
             comment = Comment.get_by_id(int(comment_id))
 
-        if self.user and comment and comment.user.get_id() == self.user.get_id():
+        if self.user and comment and comment.user_id() == self.user.get_id():
             if self.request.body:
                 new_comment = self.request.body
                 comment.comment = new_comment
@@ -413,8 +407,8 @@ class CommentHandler(Handler):
         if comment_id and comment_id.isdigit():
             comment = Comment.get_by_id(int(comment_id))
 
-        if self.user and comment and comment.user.get_id() == self.user.get_id():
-            db.delete(comment.key())
+        if self.user and comment and comment.user_id() == self.user.get_id():
+            comment.key.delete()
             self.response.write('Success! Deleted!')
         else:
             self.response.set_status('403')
@@ -430,7 +424,7 @@ class DeleteHandler(Handler):
 
         if self.user and post and post.owner_id == str(self.user.get_id()):
             title = post.title
-            db.delete(post.key())
+            post.key.delete()
             # TODO: better user feedback
             self.render("deleted.html", title=title)
         else:

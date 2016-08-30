@@ -1,33 +1,33 @@
 
 from lib.py_bcrypt import bcrypt
-from google.appengine.ext import db
+from google.appengine.ext import ndb
 
 
-class User(db.Model):
+class User(ndb.Model):
     ''' User is the user model for the app
 
         I'm using bcrypt to hash pws, which is more secure (and easier)
         than using hmac + generating salts
     '''
-    username = db.StringProperty(required=True)
-    password = db.TextProperty(required=True)
-    email = db.StringProperty(required=True)
-    create_date = db.DateTimeProperty(auto_now_add=True)
+    username = ndb.StringProperty(required=True)
+    password = ndb.TextProperty(required=True)
+    email = ndb.StringProperty(required=True)
+    create_date = ndb.DateTimeProperty(auto_now_add=True)
 
     def verify_pw(self, password):
         if bcrypt.hashpw(password, self.password) == self.password:
             return True
 
     def get_id(self):
-        return self.key().id()
+        return self.key.id()
 
     @classmethod
     def by_id(cls, uid):
-        return User.get_by_id(uid)
+        return cls.get_by_id(uid)
 
     @classmethod
     def by_name(cls, name):
-        return User.all().filter('username = ', name).get()
+        return cls.query(User.username == name).get()
 
     @classmethod
     def register(cls, username, password, email=None):
@@ -36,23 +36,23 @@ class User(db.Model):
         return user
 
 
-class Post(db.Model):
+class Post(ndb.Model):
     '''
         Post is the model for blog posts
     '''
 
-    title = db.StringProperty(required=True)
-    content = db.TextProperty(required=True)
-    create_date = db.DateTimeProperty(auto_now_add=True)
-    owner = db.ReferenceProperty(User)
-    owner_id = db.StringProperty()
-    modified_date = db.DateTimeProperty(auto_now=True)
-    like_count = db.IntegerProperty(default=0)
-    likes = db.StringListProperty()
+    title = ndb.StringProperty(required=True)
+    content = ndb.TextProperty(required=True)
+    create_date = ndb.DateTimeProperty(auto_now_add=True)
+    owner = ndb.KeyProperty(kind=User)
+    owner_id = ndb.StringProperty()
+    modified_date = ndb.DateTimeProperty(auto_now=True)
+    like_count = ndb.IntegerProperty(default=0)
+    likes = ndb.StringProperty(repeated=True)
 
     # shorthand method to get post id
     def get_id(self):
-        return self.key().id()
+        return self.key.id()
 
     # replace plaintext line breaks with html line break
     def render(self):
@@ -76,7 +76,6 @@ class Post(db.Model):
 
     # determine if a user has already liked a post
     def already_liked(self, user_id):
-        print self.likes
         if self.likes.count(str(user_id)) > 0:
             return True
 
@@ -84,31 +83,49 @@ class Post(db.Model):
         if int(self.owner_id) == int(user_id):
             return True
 
+    def owner_name(self):
+        owner = self.owner.get()
+        if owner:
+            return owner.username
+
     @classmethod
     def by_id(cls, pid):
         return cls.get_by_id(pid)
 
 
-class Comment(db.Model):
+class Comment(ndb.Model):
     '''
         Posts can have Comments related to them posted by Users
         As such Comments have two reference properties: user and post
 
         Probably good to add a modified date in the future...
     '''
-    comment = db.TextProperty(required=True)
-    user = db.ReferenceProperty(
-        User, collection_name='comments', required=True)
-    post = db.ReferenceProperty(
-        Post, collection_name='comments', required=True)
-    create_date = db.DateTimeProperty(auto_now_add=True)
+    comment = ndb.TextProperty(required=True)
+    user = ndb.KeyProperty(
+        kind=User, required=True)
+    post = ndb.KeyProperty(
+        kind=Post, required=True)
+    create_date = ndb.DateTimeProperty(auto_now_add=True)
 
     @classmethod
     def get_comments(cls, post=None):
         if post:
-            return cls.all().filter('post = ', post).run()
+            return cls.query(Comment.post == post.key).fetch()
         else:
-            return cls.all().run()
+            return cls.query().fetch()
 
     def render(self):
         return self.comment.replace('\n', '<br>')
+
+    def get_id(self):
+        return self.key.id()
+
+    def username(self):
+        user = self.user.get()
+        if user:
+            return user.username
+
+    def user_id(self):
+        user = self.user.get()
+        if user:
+            return user.get_id()
