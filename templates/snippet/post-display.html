@@ -17,7 +17,7 @@
 
 	<div class="text-center button-block posts_read-more">
 		{% if summarize_post %}
-			<a class="btn btn-info" href="/blog/{{ post.get_id() }}/">Read More...</a>
+			<a class="btn btn-info" href="/blog/{{ post.get_friendly_url() }}">Read More...</a>
 		{% endif %}
 	</div>
 

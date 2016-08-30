@@ -68,6 +68,10 @@ class Post(ndb.Model):
     def get_likes(self):
         return self.likes
 
+    def get_friendly_url(self):
+        safe_title = self.title.replace(' ', '_').lower()
+        return '%s/%s/' % (str(self.get_id()), safe_title)
+
     # add a new like to a post
     def like(self, user_id):
         self.like_count += 1

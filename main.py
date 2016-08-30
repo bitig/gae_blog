@@ -221,6 +221,7 @@ class BlogPage(Handler):
     '''
 
     def get(self, digits):
+        print(digits)
         requested_id = int(digits)
         post = Post.get_by_id(requested_id)
         error = ''
@@ -443,7 +444,8 @@ app = webapp2.WSGIApplication([
     (HOME_PATH + '/page/(\d+)/?', BlogListings),
     (HOME_PATH + '/newpost/?', NewPost),
     (HOME_PATH + '/edit/(\d+)/?', EditPost),
-    (HOME_PATH + '/(\d+)/?', BlogPage),
+    (HOME_PATH + '/(\d+)', BlogPage),
+    (HOME_PATH + '/(\d+)[\/?\-\_a-zA-Z0-9]+?', BlogPage),
     (HOME_PATH + '/login/?', LoginPage),
     (HOME_PATH + '/logout/?', Logout),
     (HOME_PATH + '/signup/?', SignupPage),
