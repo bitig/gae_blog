@@ -19,6 +19,7 @@ import webapp2
 import jinja2
 import hmac
 import random
+from json import JSONEncoder
 from models import User, Post, Comment
 from lib.py_bcrypt import bcrypt
 from google.appengine.ext import ndb
@@ -431,6 +432,51 @@ class DeleteHandler(Handler):
         else:
             self.redirect_to_login()
 
+class SearchResult():
+    def __init__(self, post):
+        self.rank = 0
+        self.post_id = post.get_id()
+        self.post_title = post.title
+        self.post_content = post.content
+        self.post_url = post.get_friendly_url()
+
+    def serialized(self):
+        return {'id': self.post_id, 'title': self.post_title, 'content': self.post_content, 'url_fragment': self.post_url}
+
+    def uprank(self):
+        self.rank += 1
+
+    def rank(self):
+        return self.rank
+
+class SearchHandler(Handler):
+    # implements a naive search algorithm
+    # search for a phrase within the content or title of posts
+    def simple_search(self, search_string):
+        search_terms = search_string.lower().split( )
+        all_posts = Post.query().fetch()
+        post_words = [{'id': post.get_id(), 'words': post.content.lower().split( ) + post.title.lower().split( ), 'post': post} for post in all_posts]
+
+        search_results = {}
+        for term in search_terms:
+            for entry in post_words:
+                if term in entry['words']:
+                    post_id = entry['id']
+                    if post_id in search_results.keys():
+                        search_results[post_id].uprank()
+                    else:
+                        search_results[post_id] = SearchResult(entry['post'])
+
+        search_results = sorted(search_results.values(), key=lambda entry: entry.rank)
+        return search_results
+
+# return stringified json of posts that match a string, or '[]' if there are no results
+class AsyncSearchHandler(SearchHandler):
+
+    def get(self, search_term):
+        self.response.write(JSONEncoder().encode(
+                        [result.serialized() for result in self.simple_search(search_term)]))
+
 
 class RedirectHome(Handler):
 
@@ -440,6 +486,7 @@ class RedirectHome(Handler):
 
 app = webapp2.WSGIApplication([
     ('/?', RedirectHome),
+    (HOME_PATH + '/search/(.+)', AsyncSearchHandler),
     (HOME_PATH + '/?', MainPage),
     (HOME_PATH + '/page/(\d+)/?', BlogListings),
     (HOME_PATH + '/newpost/?', NewPost),
