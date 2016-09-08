@@ -145,3 +145,38 @@ var editComment = function(event){
 $('.comments__list').on('click', '.comments__comment-edit', function(event){
 	editComment(event);
 });
+
+var search = function(){
+	var search_query = $('.search-terms').val();
+	var results_el = $('.search-results');
+
+	$.ajax(
+		{
+			type: 'GET',
+			url: '/blog/' + 'search/' + search_query,
+			beforeSend: function(xhr, settings){
+				results_el.css('color', 'black').html('Searching...');
+			},
+			success: function(data, status, xhr){
+				if(data.length > 0){
+					results_el.html("");
+					console.log(data)
+					for(i = 0; i < data.length; i++){
+						results_el.append(
+							'<div class="result"><h3>'
+							+ '<a href="blog/' + data[i].url_fragment + '">' + data[i].title + '</a>'
+							+ '</h3><span class="result-sample">' + data[i].content.substr(0, 50) + '...</span></div>');
+					}
+				} else {
+					results_el.html("No results.");
+				}
+			},
+			error: function(xhr, status){
+				result_el.html('Error searching posts :(');
+			}
+		}
+	);
+};
+$('.search-submit').on('click', function(){
+	search();
+});

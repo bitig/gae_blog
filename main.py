@@ -474,8 +474,14 @@ class SearchHandler(Handler):
 class AsyncSearchHandler(SearchHandler):
 
     def get(self, search_term):
+        self.response.headers["Content-Type"] = "application/json"
         self.response.write(JSONEncoder().encode(
                         [result.serialized() for result in self.simple_search(search_term)]))
+
+class SearchPage(Handler):
+
+    def get(self):
+        self.render('search.html')
 
 
 class RedirectHome(Handler):
@@ -486,6 +492,7 @@ class RedirectHome(Handler):
 
 app = webapp2.WSGIApplication([
     ('/?', RedirectHome),
+    (HOME_PATH + '/search/?', SearchPage),
     (HOME_PATH + '/search/(.+)', AsyncSearchHandler),
     (HOME_PATH + '/?', MainPage),
     (HOME_PATH + '/page/(\d+)/?', BlogListings),
