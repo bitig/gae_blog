@@ -453,7 +453,7 @@ class SearchHandler(Handler):
     # implements a naive search algorithm
     # search for a phrase within the content or title of posts
     def simple_search(self, search_string):
-        search_terms = search_string.lower().split( )
+        search_terms = search_string.lower().decode("utf-8").split( )
         all_posts = Post.query().fetch()
         post_words = [{'id': post.get_id(), 'words': post.content.lower().split( ) + post.title.lower().split( ), 'post': post} for post in all_posts]
 
