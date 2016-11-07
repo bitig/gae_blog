@@ -177,6 +177,14 @@ var search = function(){
 		}
 	);
 };
+
+$(".search-terms").keypress(function(event) {
+    if (event.which == 13) {
+        event.preventDefault();
+	search();
+    }
+});
+
 $('.search-submit').on('click', function(){
 	search();
 });
